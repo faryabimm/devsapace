@@ -1,0 +1,68 @@
+# Images
+images: {}
+  # devspace_auth: devspacecloud/auth
+  # devspace_hasura_migrations: devspacecloud/hasura
+  # devspace_hasura_init: devspacecloud/hasura-init
+  # devspace_manager: devspacecloud/manager
+  # devspace_default_backend: devspacecloud/default-backend
+  # devspace_admission_controller: devspacecloud/admission-controller
+  # devspace_ui: devspacecloud/ui
+
+# Ingress settings
+ingress:
+  enabled: true
+  tls:
+    enabled: true
+  domains:
+  - devspace.local
+
+# Database settings
+database:
+  size: 50Gi
+  password: "MY_PASSWORD"
+  persistence:
+    storageClass: 
+    nodeAffinity: 
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - "docker-desktop"
+
+# Settings for the ingress controller
+nginx-ingress:
+  enabled: true
+  podSecurityPolicy:
+    enabled: true
+  controller:
+    publishService:
+      enabled: true
+
+# Disable webhook
+webhook:
+  enabled: false
+
+# Settings for the cert-manager
+cert-manager:
+  enabled: true
+  global:
+    podSecurityPolicy: 
+      enabled: true
+  createCustomResource: false
+  serviceAccount:
+    create: false
+    name: "default"
+  webhook:
+    enabled: false  
+  cainjector:
+    enabled: false
+  extraArgs:
+    - --acme-http01-solver-resource-request-cpu=0
+    - --acme-http01-solver-resource-request-memory=0
+
+# StorageClass for local Kubernetes clusters
+localStorageClass:
+  enabled: false
+  name: devspace-local-storage

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devspace-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devspace-auth
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: devspace-auth
+    spec:
+      serviceAccountName: devspace-default
+      containers:
+      - name: default
+        {{- if and .Values.images .Values.images.devspace_auth }}
+        image: "{{ .Values.images.devspace_auth }}"
+        {{- else }}
+        image: "devspacecloud/auth:{{ .Chart.Version }}"
+        {{- end }}
+        env:
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_HOST
+          value: "devspace-postgres"
+        - name: DB_DATABASE
+          value: devspace
+        - name: DB_USER
+          value: devspace
+        - name: DB_PASSWORD
+          value: {{ .Values.database.password }}
+        - name: AUTH_TOKEN_CERT
+          value: "/auth-cert/tls.crt"
+        - name: AUTH_TOKEN_KEY
+          value: "/auth-cert/tls.key"
+        - name: AUTH_VERIFY_EMAIL
+          value: "false"
+        volumeMounts:
+        - name: auth-cert-volume
+          mountPath: /auth-cert
+          readOnly: true
+      volumes:
+        - name: auth-cert-volume
+          secret:
+            secretName: devspace-auth-secret
+            items:
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+        

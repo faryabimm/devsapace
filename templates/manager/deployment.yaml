@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devspace-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devspace-manager
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: devspace-manager
+    spec:
+      serviceAccountName: devspace-manager
+      containers:
+      - name: default
+        {{- if and .Values.images .Values.images.devspace_manager }}
+        image: "{{ .Values.images.devspace_manager }}"
+        {{- else }}
+        image: "devspacecloud/manager:{{ .Chart.Version }}"
+        {{- end }}
+        env:
+        - name: DEVSPACE_NAMESPACE
+          value: {{ .Release.Namespace }}
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_HOST
+          value: "devspace-postgres"
+        - name: DB_DATABASE
+          value: devspace
+        - name: DB_USER
+          value: devspace
+        - name: DB_PASSWORD
+          value: {{ .Values.database.password }}
+        - name: DOCKER_REGISTRY_CACERT
+          valueFrom:
+            secretKeyRef:
+              name: devspace-auth-secret
+              key: tls.crt
+        - name: DEFAULT_BACKEND_IMAGE
+          {{- if and .Values.images .Values.images.devspace_default_backend }}
+          value: "{{ .Values.images.devspace_default_backend }}"
+          {{- else }}
+          value: "devspacecloud/default-backend:{{ .Chart.Version }}"
+          {{- end }}
+        - name: ADMISSION_CONTROLLER_IMAGE
+          {{- if and .Values.images .Values.images.devspace_admission_controller }}
+          value: "{{ .Values.images.devspace_admission_controller }}"
+          {{- else }}
+          value: "devspacecloud/admission-controller:{{ .Chart.Version }}"
+          {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10

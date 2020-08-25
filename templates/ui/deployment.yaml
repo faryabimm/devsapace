@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devspace-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devspace-ui
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: devspace-ui
+    spec:
+      serviceAccountName: devspace-default
+      containers:
+        - name: default
+          {{- if and .Values.images .Values.images.devspace_ui }}
+          image: "{{ .Values.images.devspace_ui }}"
+          {{- else }}
+          image: "devspacecloud/ui:{{ .Chart.Version }}"
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10

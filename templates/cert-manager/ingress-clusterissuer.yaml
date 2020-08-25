@@ -1,0 +1,22 @@
+{{- $certManager := index .Values "cert-manager" -}}
+{{- if $certManager.enabled -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: lets-encrypt-http-issuer
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: noreply@devspace.cloud
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-account
+    # ACME DNS-01 provider configurations
+    solvers:
+    - http01:
+       ingress:
+         serviceType: ClusterIP
+         class: nginx
+{{- end -}}
